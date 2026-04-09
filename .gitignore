@@ -1,0 +1,6 @@
+node_modules/
+.claude
+logs
+*.log
+credential.json
+dist
