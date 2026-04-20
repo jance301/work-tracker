@@ -349,6 +349,55 @@ body {
 .editable-select:hover { background: var(--surface2); }
 .editable-select option { background: var(--surface2); color: var(--text); }
 
+/* ── Column resize handle ─────────────────────────────────────────────────── */
+.data-table thead th { position: relative; }
+
+.col-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 1;
+  user-select: none;
+  border-radius: 0 2px 2px 0;
+  transition: background 0.1s;
+}
+.col-resize-handle:hover,
+.col-resize-handle.dragging {
+  background: var(--accent);
+  opacity: 0.8;
+}
+
+/* ── Frozen column cells ──────────────────────────────────────────────────── */
+.col-frozen {
+  position: sticky;
+  background: var(--bg);
+}
+tr:hover > .col-frozen               { background: var(--surface2); }
+.row-overdue > .col-frozen            { background: rgba(224, 92, 92, 0.06); }
+.row-overdue:hover > .col-frozen      { background: rgba(224, 92, 92, 0.12); }
+.row-approaching > .col-frozen        { background: rgba(240, 160, 58, 0.07); }
+.row-approaching:hover > .col-frozen  { background: rgba(240, 160, 58, 0.14); }
+.group-header-row > .col-frozen       { background: var(--surface2); }
+.group-header-row:hover > .col-frozen { background: var(--border); }
+
+/* ── Settings toggle row ──────────────────────────────────────────────────── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.toggle-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
 /* Column widths */
 .col-status    { width: 50px; text-align: center; }
 .col-date      { width: 100px; }
@@ -358,7 +407,8 @@ body {
 .col-pic       { width: 90px; }
 .col-deadline  { width: 100px; }
 .col-completion { width: 100px; }
-.col-remark    { min-width: 150px; }
+.col-project   { width: 120px; }
+.col-remark    { width: 300px; min-width: 200px; }
 .col-actions   { width: 80px; text-align: center; }
 
 /* Priority badges */
@@ -794,6 +844,23 @@ input[type="date"].form-input::-webkit-calendar-picker-indicator { filter: inver
   font-weight: 700;
   border-radius: 4px;
   border: 1px solid rgba(240, 160, 58, 0.4) !important;
+}
+
+/* ── Project badge ────────────────────────────────────────────────────── */
+.project-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: rgba(52, 180, 160, 0.15);
+  color: #34b4a0;
+  border: 1px solid rgba(52, 180, 160, 0.3);
+  white-space: nowrap;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
 }
 
 /* ── Type select colour overrides ─────────────────────────────────────── */

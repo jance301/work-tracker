@@ -5,8 +5,8 @@ const fs = require('fs');
 const SHEET_TASKS    = 'WorkLog';
 const SHEET_ARCHIVED = 'Archived';
 
-// Column order: ID | Date | Items | Status | Type | Priority | PIC | Remark | Deadline | CompletionDate
-const COLS = ['ID', 'Date', 'Items', 'Status', 'Type', 'Priority', 'PIC', 'Remark', 'Deadline', 'CompletionDate'];
+// Column order: ID | Date | Items | Status | Type | Priority | PIC | Remark | Deadline | CompletionDate | Project
+const COLS = ['ID', 'Date', 'Items', 'Status', 'Type', 'Priority', 'PIC', 'Remark', 'Deadline', 'CompletionDate', 'Project'];
 
 function rowToTask(row) {
   const obj = {};
@@ -57,7 +57,7 @@ class SheetsService {
 
     // Ensure headers
     for (const sheetName of [SHEET_TASKS, SHEET_ARCHIVED]) {
-      const range = `${sheetName}!A1:J1`;
+      const range = `${sheetName}!A1:K1`;
       const res = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId, range
       });
@@ -74,7 +74,7 @@ class SheetsService {
   }
 
   async _getRows(sheetName) {
-    const range = `${sheetName}!A2:J`;
+    const range = `${sheetName}!A2:K`;
     const res = await this.sheets.spreadsheets.values.get({
       spreadsheetId: this.spreadsheetId, range
     });
@@ -108,6 +108,7 @@ class SheetsService {
       Remark: task.Remark || '',
       Deadline: task.Deadline || '',
       CompletionDate: '',
+      Project: task.Project || '',
     };
     await this.sheets.spreadsheets.values.append({
       spreadsheetId: this.spreadsheetId,
@@ -124,7 +125,7 @@ class SheetsService {
     if (rowNum === -1) throw new Error(`Task ${task.ID} not found`);
     await this.sheets.spreadsheets.values.update({
       spreadsheetId: this.spreadsheetId,
-      range: `${SHEET_TASKS}!A${rowNum}:J${rowNum}`,
+      range: `${SHEET_TASKS}!A${rowNum}:K${rowNum}`,
       valueInputOption: 'RAW',
       requestBody: { values: [taskToRow(task)] }
     });
@@ -172,7 +173,7 @@ class SheetsService {
     if (rowNum === -1) throw new Error(`Archived task ${task.ID} not found`);
     await this.sheets.spreadsheets.values.update({
       spreadsheetId: this.spreadsheetId,
-      range: `${SHEET_ARCHIVED}!A${rowNum}:J${rowNum}`,
+      range: `${SHEET_ARCHIVED}!A${rowNum}:K${rowNum}`,
       valueInputOption: 'RAW',
       requestBody: { values: [taskToRow(task)] }
     });

@@ -85,8 +85,8 @@ let tasks = [];
 let archived = [];
 let sortState  = { col: 'Date', dir: 'desc' };
 let filterState = {
-  wl: { type: new Set(), priority: new Set(), pic: new Set(), text: '' },
-  ar: { type: new Set(), priority: new Set(), pic: new Set(), text: '' },
+  wl: { type: new Set(), priority: new Set(), pic: new Set(), project: new Set(), text: '' },
+  ar: { type: new Set(), priority: new Set(), pic: new Set(), project: new Set(), text: '' },
 };
 let groupState = {
   wl: { field: '', collapsed: new Set() },
@@ -95,6 +95,120 @@ let groupState = {
 let editingTask = null;
 let editingArchived = false;
 let pendingDelete = null;
+
+/* ── Resizable columns & Freeze panes ──────────────────────────────────────── */
+const COL_WIDTHS_KEY = 'wt-col-widths';
+const FREEZE_KEY     = 'wt-freeze';
+const TABLE_IDS      = ['table-worklog', 'table-archived'];
+
+function getFreezeSettings() {
+  try { return { header: true, cols: 0, ...JSON.parse(localStorage.getItem(FREEZE_KEY) || '{}') }; }
+  catch { return { header: true, cols: 0 }; }
+}
+
+function saveColWidths(tableId) {
+  const all = JSON.parse(localStorage.getItem(COL_WIDTHS_KEY) || '{}');
+  all[tableId] = [...document.querySelectorAll(`#${tableId} thead th`)].map(th => th.offsetWidth);
+  localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(all));
+}
+
+function loadColWidths(tableId) {
+  let all; try { all = JSON.parse(localStorage.getItem(COL_WIDTHS_KEY) || '{}'); } catch { return; }
+  const ws = all[tableId];
+  if (!ws) return;
+  document.querySelectorAll(`#${tableId} thead th`).forEach((th, i) => {
+    if (ws[i] > 0) { th.style.width = ws[i] + 'px'; th.style.minWidth = ws[i] + 'px'; }
+  });
+}
+
+function setupResizableColumns() {
+  TABLE_IDS.forEach(tableId => {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    loadColWidths(tableId);
+
+    table.querySelectorAll('thead th').forEach(th => {
+      const handle = document.createElement('div');
+      handle.className = 'col-resize-handle';
+      handle.addEventListener('click', e => e.stopPropagation());
+      th.appendChild(handle);
+
+      let x0, w0;
+      handle.addEventListener('mousedown', e => {
+        e.preventDefault(); e.stopPropagation();
+        x0 = e.pageX; w0 = th.offsetWidth;
+        handle.classList.add('dragging');
+        const onMove = e => {
+          const w = Math.max(36, w0 + e.pageX - x0);
+          th.style.width = th.style.minWidth = w + 'px';
+          updateStickyOffsets(table);
+        };
+        const onUp = () => {
+          handle.classList.remove('dragging');
+          saveColWidths(tableId);
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
+  });
+}
+
+function updateStickyOffsets(table) {
+  const { header, cols } = getFreezeSettings();
+  const ths = [...table.querySelectorAll('thead th')];
+
+  // Compute cumulative left offsets from current rendered widths
+  const lefts = []; let cum = 0;
+  ths.forEach((th, i) => { lefts[i] = cum; cum += th.offsetWidth; });
+
+  ths.forEach((th, i) => {
+    const isFrozenCol = i < cols;
+    th.style.position  = (isFrozenCol || header) ? 'sticky' : '';
+    th.style.top       = header      ? '0'            : '';
+    th.style.left      = isFrozenCol ? lefts[i]+'px'  : '';
+    th.style.zIndex    = (isFrozenCol && header) ? '20' : (isFrozenCol || header) ? '10' : '';
+    th.style.boxShadow = (isFrozenCol && i === cols - 1) ? '2px 0 6px rgba(0,0,0,0.4)' : '';
+  });
+
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    [...tr.children].forEach((td, i) => {
+      if (i < cols) {
+        td.classList.add('col-frozen');
+        td.style.left      = lefts[i] + 'px';
+        td.style.zIndex    = '2';
+        td.style.boxShadow = (i === cols - 1) ? '2px 0 6px rgba(0,0,0,0.2)' : '';
+      } else {
+        td.classList.remove('col-frozen');
+        td.style.left = td.style.zIndex = td.style.boxShadow = '';
+      }
+    });
+  });
+}
+
+function applyFreezeSettings() {
+  TABLE_IDS.forEach(id => { const t = document.getElementById(id); if (t) updateStickyOffsets(t); });
+}
+
+function setupFreezeSettings() {
+  const hCb  = document.getElementById('s-freeze-header');
+  const cSel = document.getElementById('s-freeze-cols');
+  const { header, cols } = getFreezeSettings();
+  if (hCb)  hCb.checked = header;
+  if (cSel) cSel.value  = String(cols);
+
+  const onChange = () => {
+    localStorage.setItem(FREEZE_KEY, JSON.stringify({
+      header: hCb?.checked ?? true,
+      cols:   parseInt(cSel?.value ?? '0', 10),
+    }));
+    applyFreezeSettings();
+  };
+  hCb?.addEventListener('change', onChange);
+  cSel?.addEventListener('change', onChange);
+}
 
 /* ── Init ───────────────────────────────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded', async () => {
@@ -105,6 +219,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupSort();
   setupFilters();
   setupGroupBy();
+  setupResizableColumns();
+  setupFreezeSettings();
 
   config = await window.api.getConfig();
   applyConfigToSettings();
@@ -148,16 +264,18 @@ const FILTER_CONFIGS = [
   { tab:'wl', key:'type',     btnId:'fb-wl-type',     panelId:'fp-wl-type',     label:'Type',     colorFn: n => getTypeColors(n)     },
   { tab:'wl', key:'priority', btnId:'fb-wl-priority', panelId:'fp-wl-priority', label:'Priority', colorFn: n => getPriorityColors(n) },
   { tab:'wl', key:'pic',      btnId:'fb-wl-pic',      panelId:'fp-wl-pic',      label:'PIC',      colorFn: null                      },
+  { tab:'wl', key:'project',  btnId:'fb-wl-project',  panelId:'fp-wl-project',  label:'Project',  colorFn: null                      },
   { tab:'ar', key:'type',     btnId:'fb-ar-type',     panelId:'fp-ar-type',     label:'Type',     colorFn: n => getTypeColors(n)     },
   { tab:'ar', key:'priority', btnId:'fb-ar-priority', panelId:'fp-ar-priority', label:'Priority', colorFn: n => getPriorityColors(n) },
   { tab:'ar', key:'pic',      btnId:'fb-ar-pic',      panelId:'fp-ar-pic',      label:'PIC',      colorFn: null                      },
+  { tab:'ar', key:'project',  btnId:'fb-ar-project',  panelId:'fp-ar-project',  label:'Project',  colorFn: null                      },
 ];
 
 function populateFilterOptions() {
   const all = [...tasks, ...archived];
   const unique = key => [...new Set(all.map(t => t[key]).filter(Boolean))].sort();
 
-  const values = { type: unique('Type'), priority: unique('Priority'), pic: unique('PIC') };
+  const values = { type: unique('Type'), priority: unique('Priority'), pic: unique('PIC'), project: unique('Project') };
 
   FILTER_CONFIGS.forEach(cfg => {
     buildFilterPanel(cfg, values[cfg.key]);
@@ -283,6 +401,10 @@ function worklogRowHtml(t) {
       <td class="col-deadline">
         <input type="date" class="inline-date" value="${t.Deadline}" data-id="${t.ID}" data-field="Deadline" />
       </td>
+      <td class="col-project">
+        ${t.Project ? `<span class="project-badge">${esc(t.Project)}</span>` : '<span class="remark-empty">—</span>'}
+        <span class="editable project-editable" contenteditable="true" data-id="${t.ID}" data-field="Project" style="display:none">${esc(t.Project)}</span>
+      </td>
       <td class="col-remark">
         <div class="remark-cell" data-id="${t.ID}">
           <div class="remark-view">${parseRemarkHtml(t.Remark)}</div>
@@ -313,6 +435,10 @@ function archivedRowHtml(t) {
       </td>
       <td class="col-completion">
         <input type="date" class="inline-date" value="${t.CompletionDate}" data-id="${t.ID}" data-field="CompletionDate" data-archived="1" />
+      </td>
+      <td class="col-project">
+        ${t.Project ? `<span class="project-badge">${esc(t.Project)}</span>` : '<span class="remark-empty">—</span>'}
+        <span class="editable project-editable" contenteditable="true" data-id="${t.ID}" data-field="Project" data-archived="1" style="display:none">${esc(t.Project)}</span>
       </td>
       <td class="col-remark">
         <div class="remark-cell" data-id="${t.ID}" data-archived="1">
@@ -368,12 +494,12 @@ function renderWorklog() {
   if (gs.field) rows = [...rows].sort((a, b) => (a[gs.field]||'').localeCompare(b[gs.field]||''));
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No tasks. Click "+ New Task" to add one.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="10">No tasks. Click "+ New Task" to add one.</td></tr>';
     return;
   }
 
   tbody.innerHTML = gs.field
-    ? renderGrouped(rows, gs.field, gs.collapsed, worklogRowHtml, 9)
+    ? renderGrouped(rows, gs.field, gs.collapsed, worklogRowHtml, 10)
     : rows.map(worklogRowHtml).join('');
 
   // Events
@@ -413,6 +539,8 @@ function renderWorklog() {
   applyAllBadgeColors(tbody);
   highlightDeadlines(tbody);
   setupRemarkCells(tbody);
+  setupProjectCells(tbody);
+  updateStickyOffsets(document.getElementById('table-worklog'));
 }
 
 /* ── Render Archived ────────────────────────────────────────────────────── */
@@ -425,12 +553,12 @@ function renderArchived() {
   if (gs.field) rows = [...rows].sort((a, b) => (a[gs.field]||'').localeCompare(b[gs.field]||''));
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No archived tasks yet.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="10">No archived tasks yet.</td></tr>';
     return;
   }
 
   tbody.innerHTML = gs.field
-    ? renderGrouped(rows, gs.field, gs.collapsed, archivedRowHtml, 9)
+    ? renderGrouped(rows, gs.field, gs.collapsed, archivedRowHtml, 10)
     : rows.map(archivedRowHtml).join('');
 
   tbody.querySelectorAll('.inline-date').forEach(inp => inp.addEventListener('change', onInlineChange));
@@ -461,6 +589,8 @@ function renderArchived() {
   applyAllBadgeColors(tbody);
   highlightDeadlines(tbody);
   setupRemarkCells(tbody);
+  setupProjectCells(tbody);
+  updateStickyOffsets(document.getElementById('table-archived'));
 }
 
 /* ── Inline editing ─────────────────────────────────────────────────────── */
@@ -559,10 +689,11 @@ function applyFilters(rows, fs) {
   if (fs.type.size > 0)     rows = rows.filter(t => fs.type.has(t.Type));
   if (fs.priority.size > 0) rows = rows.filter(t => fs.priority.has(t.Priority));
   if (fs.pic.size > 0)      rows = rows.filter(t => fs.pic.has(t.PIC));
+  if (fs.project.size > 0)  rows = rows.filter(t => fs.project.has(t.Project));
   if (fs.text) {
     const q = fs.text.toLowerCase();
     rows = rows.filter(t =>
-      [t.Items, t.Type, t.Priority, t.PIC, t.Remark].some(v => (v||'').toLowerCase().includes(q))
+      [t.Items, t.Type, t.Priority, t.PIC, t.Remark, t.Project].some(v => (v||'').toLowerCase().includes(q))
     );
   }
   return rows;
@@ -679,6 +810,7 @@ function openAddModal() {
   document.getElementById('f-deadline').value = '';
   document.getElementById('f-items').value = '';
   document.getElementById('f-remark').value = '';
+  document.getElementById('f-project').value = '';
   document.getElementById('f-completion').value = '';
   document.getElementById('f-completion-row').style.display = 'none';
   document.getElementById('modal-overlay').classList.remove('hidden');
@@ -697,6 +829,7 @@ function openEditModal(id, isArchived) {
   document.getElementById('f-deadline').value = task.Deadline || '';
   document.getElementById('f-items').value = task.Items || '';
   document.getElementById('f-remark').value = task.Remark || '';
+  document.getElementById('f-project').value = task.Project || '';
   document.getElementById('f-completion').value = task.CompletionDate || '';
   document.getElementById('f-type').value = task.Type || '';
   document.getElementById('f-priority').value = task.Priority || 'Normal';
@@ -740,6 +873,7 @@ async function saveModal() {
     Remark: document.getElementById('f-remark').value,
     Deadline: document.getElementById('f-deadline').value,
     CompletionDate: document.getElementById('f-completion').value,
+    Project: document.getElementById('f-project').value.trim(),
   };
 
   let res;
@@ -881,12 +1015,65 @@ function setupRemarkCells(tbody) {
   });
 }
 
+/* ── Project cells (click badge → inline edit) ──────────────────────────── */
+function setupProjectCells(tbody) {
+  tbody.querySelectorAll('.col-project').forEach(cell => {
+    const badge    = cell.querySelector('.project-badge, .remark-empty');
+    const editable = cell.querySelector('.project-editable');
+    if (!badge || !editable) return;
+
+    badge.style.cursor = 'text';
+    badge.addEventListener('click', () => {
+      badge.style.display    = 'none';
+      editable.style.display = 'inline-block';
+      editable.focus();
+      // Move cursor to end
+      const range = document.createRange();
+      range.selectNodeContents(editable);
+      range.collapse(false);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+    });
+
+    editable.addEventListener('blur', async () => {
+      const value = editable.innerText.trim();
+      const id    = editable.dataset.id;
+      const isAr  = !!editable.dataset.archived;
+      const list  = isAr ? archived : tasks;
+      const task  = list.find(t => t.ID === id);
+      if (task && task.Project !== value) {
+        task.Project = value;
+        const res = isAr ? await window.api.updateArchived(task) : await window.api.updateTask(task);
+        if (!res.ok) setSyncStatus('Save failed: ' + res.error, 'error');
+        else setSyncStatus(`Saved ${fmtTime(new Date())}`, 'ok');
+      }
+      // Refresh badge display
+      badge.outerHTML = value
+        ? `<span class="project-badge" style="cursor:text">${esc(value)}</span>`
+        : `<span class="remark-empty" style="cursor:text">—</span>`;
+      editable.style.display = 'none';
+      // Re-attach after DOM change by re-running setup on this cell
+      setupProjectCells(tbody);
+    });
+
+    editable.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); editable.blur(); }
+      if (e.key === 'Escape') {
+        const task = (editable.dataset.archived ? archived : tasks).find(t => t.ID === editable.dataset.id);
+        editable.innerText = task?.Project || '';
+        editable.blur();
+      }
+    });
+  });
+}
+
 /* ── Group By ───────────────────────────────────────────────────────────── */
 const GROUP_FIELDS = [
   { value: '',         label: 'None' },
   { value: 'Type',     label: 'Type' },
   { value: 'Priority', label: 'Priority' },
   { value: 'PIC',      label: 'PIC' },
+  { value: 'Project',  label: 'Project' },
 ];
 
 function setupGroupBy() {

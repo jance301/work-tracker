@@ -43,6 +43,10 @@
           <button class="filter-btn" id="fb-wl-pic">PIC <span class="filter-count"></span><span class="filter-arrow">▾</span></button>
           <div class="filter-panel hidden" id="fp-wl-pic"></div>
         </div>
+        <div class="filter-dropdown">
+          <button class="filter-btn" id="fb-wl-project">Project <span class="filter-count"></span><span class="filter-arrow">▾</span></button>
+          <div class="filter-panel hidden" id="fp-wl-project"></div>
+        </div>
       </div>
       <div class="toolbar-divider"></div>
       <div class="filter-dropdown">
@@ -62,12 +66,13 @@
             <th class="col-priority sortable" data-col="Priority">Priority <span class="sort-arrow"></span></th>
             <th class="col-pic sortable" data-col="PIC">PIC <span class="sort-arrow"></span></th>
             <th class="col-deadline sortable" data-col="Deadline">Deadline <span class="sort-arrow"></span></th>
+            <th class="col-project sortable" data-col="Project">Project <span class="sort-arrow"></span></th>
             <th class="col-remark">Remark</th>
             <th class="col-actions">Actions</th>
           </tr>
         </thead>
         <tbody id="tbody-worklog">
-          <tr class="loading-row"><td colspan="9">Loading…</td></tr>
+          <tr class="loading-row"><td colspan="10">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -90,6 +95,10 @@
           <button class="filter-btn" id="fb-ar-pic">PIC <span class="filter-count"></span><span class="filter-arrow">▾</span></button>
           <div class="filter-panel hidden" id="fp-ar-pic"></div>
         </div>
+        <div class="filter-dropdown">
+          <button class="filter-btn" id="fb-ar-project">Project <span class="filter-count"></span><span class="filter-arrow">▾</span></button>
+          <div class="filter-panel hidden" id="fp-ar-project"></div>
+        </div>
       </div>
       <div class="toolbar-divider"></div>
       <div class="filter-dropdown">
@@ -109,12 +118,13 @@
             <th class="col-pic sortable" data-col="PIC">PIC <span class="sort-arrow"></span></th>
             <th class="col-deadline sortable" data-col="Deadline">Deadline <span class="sort-arrow"></span></th>
             <th class="col-completion sortable" data-col="CompletionDate">Completed <span class="sort-arrow"></span></th>
+            <th class="col-project sortable" data-col="Project">Project <span class="sort-arrow"></span></th>
             <th class="col-remark">Remark</th>
             <th class="col-actions">Actions</th>
           </tr>
         </thead>
         <tbody id="tbody-archived">
-          <tr class="loading-row"><td colspan="9">Loading…</td></tr>
+          <tr class="loading-row"><td colspan="10">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -179,6 +189,27 @@
         <div id="priority-color-grid" class="color-grid"></div>
       </section>
 
+      <section class="settings-section">
+        <h2>Table Preferences</h2>
+        <p class="settings-hint">Saved locally on this device only — not synced to Google Sheets.</p>
+        <div class="field-row">
+          <label>Freeze header row</label>
+          <label class="toggle-row">
+            <input type="checkbox" id="s-freeze-header" />
+            <span class="field-hint">Keep column headers visible while scrolling down</span>
+          </label>
+        </div>
+        <div class="field-row">
+          <label>Freeze columns <span class="field-hint">(from left)</span></label>
+          <select id="s-freeze-cols" class="form-input" style="max-width:160px">
+            <option value="0">None</option>
+            <option value="1">1 column</option>
+            <option value="2">2 columns</option>
+            <option value="3">3 columns</option>
+          </select>
+        </div>
+      </section>
+
       <div class="btn-row">
         <button id="btn-save-settings" class="btn btn-primary">Save Settings</button>
         <span id="settings-status" class="conn-status"></span>
@@ -218,6 +249,10 @@
           <div class="form-field">
             <label>PIC</label>
             <select id="f-pic" class="form-input"></select>
+          </div>
+          <div class="form-field">
+            <label>Project</label>
+            <input id="f-project" type="text" class="form-input" placeholder="e.g. Project Alpha" />
           </div>
           <div class="form-field" id="f-completion-row">
             <label>Completion Date</label>
