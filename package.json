@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win"
+    "build": "electron-builder --win",
+    "build:mac": "electron-builder --mac"
   },
   "dependencies": {
     "googleapis": "^144.0.0"
@@ -15,8 +16,8 @@
     "electron-builder": "^25.0.0"
   },
   "build": {
-    "appId": "com.jance.worktracker",
-    "productName": "Work Tracker",
+    "appId": "com.jance.tasktracker",
+    "productName": "Task Tracker",
     "directories": {
       "output": "dist"
     },
@@ -38,6 +39,17 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns"
+    },
+    "dmg": {
+      "title": "Task Tracker"
     },
     "files": [
       "main.js",

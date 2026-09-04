@@ -1,21 +1,32 @@
 const { google } = require('googleapis');
-const fs = require('fs');
 
 // Sheet names
 const SHEET_TASKS    = 'WorkLog';
 const SHEET_ARCHIVED = 'Archived';
 
-// Column order: ID | Date | Items | Status | Type | Priority | PIC | Remark | Deadline | CompletionDate | Project
-const COLS = ['ID', 'Date', 'Items', 'Status', 'Type', 'Priority', 'PIC', 'Remark', 'Deadline', 'CompletionDate', 'Project'];
+// Column order: ID | Date | Items | Status | Tags | Priority | PIC | Remark | Deadline | CompletionDate | Pinned | CustomData
+const COLS = ['ID', 'Date', 'Items', 'Status', 'Tags', 'Priority', 'PIC', 'Remark', 'Deadline', 'CompletionDate', 'Pinned', 'CustomData'];
+const BUILT_IN_FIELDS = new Set(['ID','Date','Items','Status','Tags','Priority','PIC','Remark','Deadline','CompletionDate','Pinned','CustomData']);
 
 function rowToTask(row) {
   const obj = {};
   COLS.forEach((col, i) => { obj[col] = row[i] ?? ''; });
+  // Parse CustomData JSON and merge user-added column values into the task object
+  if (obj.CustomData) {
+    try { Object.assign(obj, JSON.parse(obj.CustomData)); } catch {}
+  }
+  delete obj.CustomData;
   return obj;
 }
 
 function taskToRow(task) {
-  return COLS.map(col => task[col] ?? '');
+  // Collect any non-built-in fields into CustomData JSON
+  const extra = {};
+  Object.keys(task).forEach(k => { if (!BUILT_IN_FIELDS.has(k)) extra[k] = task[k]; });
+  return COLS.map(col => {
+    if (col === 'CustomData') return Object.keys(extra).length ? JSON.stringify(extra) : '';
+    return task[col] ?? '';
+  });
 }
 
 function genId() {
@@ -28,11 +39,10 @@ function today() {
 }
 
 class SheetsService {
-  constructor(credentialsPath, spreadsheetId) {
+  constructor(serviceAccountObj, spreadsheetId) {
     this.spreadsheetId = spreadsheetId;
-    const creds = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
     const auth = new google.auth.GoogleAuth({
-      credentials: creds,
+      credentials: serviceAccountObj,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
     this.sheets = google.sheets({ version: 'v4', auth });
@@ -57,24 +67,33 @@ class SheetsService {
 
     // Ensure headers
     for (const sheetName of [SHEET_TASKS, SHEET_ARCHIVED]) {
-      const range = `${sheetName}!A1:K1`;
+      const range = `${sheetName}!A1:L1`;
       const res = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId, range
       });
       const first = res.data.values?.[0] ?? [];
       if (first[0] !== 'ID') {
+        // New sheet — write full header row
         await this.sheets.spreadsheets.values.update({
           spreadsheetId: this.spreadsheetId,
           range,
           valueInputOption: 'RAW',
           requestBody: { values: [COLS] }
         });
+      } else if (!first.includes('CustomData')) {
+        // Existing sheet missing the CustomData column — append it
+        await this.sheets.spreadsheets.values.update({
+          spreadsheetId: this.spreadsheetId,
+          range: `${sheetName}!L1`,
+          valueInputOption: 'RAW',
+          requestBody: { values: [['CustomData']] }
+        });
       }
     }
   }
 
   async _getRows(sheetName) {
-    const range = `${sheetName}!A2:K`;
+    const range = `${sheetName}!A2:L`;
     const res = await this.sheets.spreadsheets.values.get({
       spreadsheetId: this.spreadsheetId, range
     });
@@ -102,13 +121,13 @@ class SheetsService {
       Date: task.Date || today(),
       Items: task.Items || '',
       Status: false,
-      Type: task.Type || '',
+      Tags: task.Tags || '',
       Priority: task.Priority || 'Normal',
       PIC: task.PIC || '',
       Remark: task.Remark || '',
       Deadline: task.Deadline || '',
       CompletionDate: '',
-      Project: task.Project || '',
+      Pinned: '',
     };
     await this.sheets.spreadsheets.values.append({
       spreadsheetId: this.spreadsheetId,
@@ -125,7 +144,7 @@ class SheetsService {
     if (rowNum === -1) throw new Error(`Task ${task.ID} not found`);
     await this.sheets.spreadsheets.values.update({
       spreadsheetId: this.spreadsheetId,
-      range: `${SHEET_TASKS}!A${rowNum}:K${rowNum}`,
+      range: `${SHEET_TASKS}!A${rowNum}:L${rowNum}`,
       valueInputOption: 'RAW',
       requestBody: { values: [taskToRow(task)] }
     });
@@ -135,7 +154,7 @@ class SheetsService {
     const rowNum = await this._findRow(SHEET_TASKS, id);
     if (rowNum === -1) throw new Error(`Task ${id} not found`);
 
-    const range = `${SHEET_TASKS}!A${rowNum}:J${rowNum}`;
+    const range = `${SHEET_TASKS}!A${rowNum}:L${rowNum}`;
     const res = await this.sheets.spreadsheets.values.get({
       spreadsheetId: this.spreadsheetId, range
     });
@@ -173,10 +192,32 @@ class SheetsService {
     if (rowNum === -1) throw new Error(`Archived task ${task.ID} not found`);
     await this.sheets.spreadsheets.values.update({
       spreadsheetId: this.spreadsheetId,
-      range: `${SHEET_ARCHIVED}!A${rowNum}:K${rowNum}`,
+      range: `${SHEET_ARCHIVED}!A${rowNum}:L${rowNum}`,
       valueInputOption: 'RAW',
       requestBody: { values: [taskToRow(task)] }
     });
+  }
+
+  async bulkImport({ tasks, archived }) {
+    await this.ensureSheets();
+    if (tasks.length > 0) {
+      await this.sheets.spreadsheets.values.append({
+        spreadsheetId: this.spreadsheetId,
+        range: `${SHEET_TASKS}!A2`,
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
+        requestBody: { values: tasks.map(taskToRow) },
+      });
+    }
+    if (archived.length > 0) {
+      await this.sheets.spreadsheets.values.append({
+        spreadsheetId: this.spreadsheetId,
+        range: `${SHEET_ARCHIVED}!A2`,
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
+        requestBody: { values: archived.map(taskToRow) },
+      });
+    }
   }
 
   async _deleteRow(sheetName, rowNum) {

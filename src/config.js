@@ -2,14 +2,44 @@ const { app } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+const DEFAULT_COLUMNS = [
+  {
+    id: 'tags',
+    name: 'Tags',
+    type: 'multiselect',
+    items: ['Documentation', 'CR', 'Deployment', 'Meeting', 'Bug Fix', 'Testing'],
+    colors: {},
+    locked: true,
+  },
+  {
+    id: 'priority',
+    name: 'Priority',
+    type: 'dropdown',
+    items: ['Normal', 'Low', 'High'],
+    colors: {},
+    locked: false,
+  },
+  {
+    id: 'pic',
+    name: 'PIC',
+    type: 'dropdown',
+    items: ['Jance'],
+    colors: {},
+    locked: false,
+  },
+];
+
 const DEFAULTS = {
-  credentialsPath: '',
-  spreadsheetId: '',
-  types: ['Documentation', 'CR', 'Deployment', 'Meeting', 'Bug Fix', 'Testing'],
-  priorities: ['Normal', 'Low', 'High'],
-  pics: ['Jance'],
-  typeColors: {},
-  priorityColors: {},
+  storageMode: 'local',
+  dataFilePath: '',
+  // Google credentials (migrated from external credentials file)
+  serviceAccount:       null,
+  spreadsheetId:        '',
+  calendarClientId:     '',
+  calendarClientSecret: '',
+  calendarTokens:       null,
+  backgrounds: { default: [], periods: [] },
+  customColumns: DEFAULT_COLUMNS,
 };
 
 class ConfigManager {
@@ -28,7 +58,19 @@ class ConfigManager {
   getAll() {
     try {
       const raw = fs.readFileSync(this.filePath, 'utf8');
-      return { ...DEFAULTS, ...JSON.parse(raw) };
+      const stored = JSON.parse(raw);
+
+      // Migrate old flat format → customColumns
+      if (!stored.customColumns) {
+        stored.customColumns = DEFAULT_COLUMNS.map(col => {
+          if (col.id === 'tags')     return { ...col, items: stored.tags     || col.items, colors: stored.tagColors      || {} };
+          if (col.id === 'priority') return { ...col, items: stored.priorities|| col.items, colors: stored.priorityColors || {} };
+          if (col.id === 'pic')      return { ...col, items: stored.pics      || col.items };
+          return col;
+        });
+      }
+
+      return { ...DEFAULTS, ...stored };
     } catch {
       return { ...DEFAULTS };
     }

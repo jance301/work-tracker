@@ -1,4 +1,4 @@
-# Work Tracker — Setup Guide
+# Task Tracker — Setup Guide
 
 ## 1. First-time Run
 ```
@@ -27,7 +27,7 @@ npm start
    (found in the JSON file as `client_email`) — give it **Editor** access
 
 ### D. Configure the App
-1. Open Work Tracker → go to **Settings** tab
+1. Open Task Tracker → go to **Settings** tab
 2. Click **Browse…** and select the credentials JSON file
 3. Paste the Spreadsheet ID
 4. Click **Test Connection** to verify
@@ -40,8 +40,8 @@ The app will auto-create "WorkLog" and "Archived" sheets on first connect.
 npm run build
 ```
 Output will be in the `dist/` folder:
-- `Work Tracker Setup.exe` — installer
-- `Work Tracker.exe` — portable version
+- `Task Tracker Setup.exe` — installer
+- `Task Tracker.exe` — portable version
 
 ## 4. Move to Another PC
 - Copy your credentials JSON file to the new PC

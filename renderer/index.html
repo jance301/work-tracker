@@ -2,52 +2,206 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline';">
-  <title>Work Tracker</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <title>Task Tracker</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- Header -->
-  <header class="app-header">
-    <div class="app-title">
-      <span class="app-icon">&#9745;</span>
-      <span>Work Tracker</span>
+
+<!-- ── Heroicons sprite (outline, 24×24) ──────────────────── -->
+<svg aria-hidden="true" style="display:none">
+  <symbol id="hi-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
+  </symbol>
+  <symbol id="hi-clipboard-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/>
+  </symbol>
+  <symbol id="hi-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
+  </symbol>
+  <symbol id="hi-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z"/>
+  </symbol>
+  <symbol id="hi-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281zM15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+  </symbol>
+  <symbol id="hi-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  </symbol>
+  <symbol id="hi-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  </symbol>
+  <symbol id="hi-exclamation-triangle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+  </symbol>
+  <symbol id="hi-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+  </symbol>
+  <symbol id="hi-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  </symbol>
+</svg>
+
+<div class="app-layout">
+
+  <!-- ── Sidebar ───────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg class="icon sidebar-logo-icon"><use href="#hi-logo"/></svg>
+      <span class="sidebar-logo-text">Task Tracker</span>
     </div>
-    <div class="header-actions">
+
+    <nav class="sidebar-nav">
+      <button class="tab-btn active" data-tab="dashboard">
+        <svg class="icon nav-icon"><use href="#hi-home"/></svg>Dashboard
+      </button>
+      <button class="tab-btn" data-tab="worklog">
+        <svg class="icon nav-icon"><use href="#hi-clipboard-list"/></svg>Tasks
+      </button>
+      <button class="tab-btn" data-tab="archived">
+        <svg class="icon nav-icon"><use href="#hi-archive"/></svg>Archived Tasks
+      </button>
+      <button class="tab-btn" data-tab="calendar">
+        <svg class="icon nav-icon"><use href="#hi-calendar"/></svg>Calendar
+      </button>
+      <button class="tab-btn" data-tab="settings">
+        <svg class="icon nav-icon"><use href="#hi-cog"/></svg>Settings
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
       <span id="sync-status" class="sync-status"></span>
-      <button id="btn-refresh" class="btn btn-icon" title="Refresh data">&#8635;</button>
+      <button id="btn-refresh" class="btn btn-icon sidebar-refresh" title="Refresh data">
+        <svg class="icon"><use href="#hi-refresh"/></svg>
+      </button>
     </div>
-  </header>
+  </aside>
 
-  <!-- Tabs -->
-  <nav class="tab-bar">
-    <button class="tab-btn active" data-tab="worklog">Work Log</button>
-    <button class="tab-btn" data-tab="archived">Archived</button>
-    <button class="tab-btn" data-tab="settings">Settings</button>
-  </nav>
+  <!-- ── Main content ──────────────────────────────────────── -->
+  <main class="main-content">
 
-  <!-- ── Work Log Tab ───────────────────────────────────────── -->
-  <div id="tab-worklog" class="tab-content active">
+  <!-- ── Dashboard Tab ─────────────────────────────────────── -->
+  <div id="tab-dashboard" class="tab-content active">
+    <div class="dash-scroll">
+      <div class="dash-inner">
+
+        <!-- Hero banner -->
+        <div class="dash-hero">
+          <div class="dash-hero-glow"></div>
+          <div class="dash-hero-content">
+            <div>
+              <div class="dash-hero-eyebrow">Task Tracker</div>
+              <h1 class="dash-hero-title" id="dash-greeting">Good morning!</h1>
+              <p class="dash-hero-sub" id="dash-date">Thursday, April 30, 2026</p>
+            </div>
+            <div class="dash-hero-actions">
+              <button id="dash-btn-new-task" class="btn btn-secondary">+ New Task</button>
+              <button id="dash-btn-new-event" class="btn btn-primary">+ New Event</button>
+              <button id="dash-btn-refresh" class="btn btn-icon" title="Refresh">&#8635;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat cards row -->
+        <div class="dash-stats">
+
+          <div class="stat-card sc-blue">
+            <div class="sc-icon-wrap sc-blue-icon"><svg class="icon"><use href="#hi-check-circle"/></svg></div>
+            <div class="sc-body">
+              <div class="sc-num" id="stat-tasks-today">—</div>
+              <div class="sc-lbl">Tasks Today</div>
+            </div>
+          </div>
+
+          <div class="stat-card sc-purple">
+            <div class="sc-icon-wrap sc-purple-icon"><svg class="icon"><use href="#hi-calendar"/></svg></div>
+            <div class="sc-body">
+              <div class="sc-num" id="stat-events-today">—</div>
+              <div class="sc-lbl">Events Today</div>
+            </div>
+          </div>
+
+          <div class="stat-card sc-amber">
+            <div class="sc-icon-wrap sc-amber-icon"><svg class="icon"><use href="#hi-clock"/></svg></div>
+            <div class="sc-body">
+              <div class="sc-num" id="stat-due-week">—</div>
+              <div class="sc-lbl">Due This Week</div>
+            </div>
+          </div>
+
+          <div class="stat-card sc-red">
+            <div class="sc-icon-wrap sc-red-icon"><svg class="icon"><use href="#hi-exclamation-triangle"/></svg></div>
+            <div class="sc-body">
+              <div class="sc-num" id="stat-overdue">—</div>
+              <div class="sc-lbl">Overdue Tasks</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Two-column content grid -->
+        <div class="dash-grid">
+
+          <!-- LEFT: Today -->
+          <div class="dash-col">
+
+            <div class="dash-card">
+              <div class="dash-card-hd dash-hd-purple">
+                <span class="dash-card-title">Today's Events</span>
+                <span id="dash-cal-badge" class="dash-conn-badge"></span>
+              </div>
+              <div id="dash-events-today" class="dash-list">
+                <div class="dash-empty-state">Loading…</div>
+              </div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-hd dash-hd-blue">
+                <span class="dash-card-title">Today's Tasks</span>
+              </div>
+              <div id="dash-tasks-today" class="dash-list">
+                <div class="dash-empty-state">Loading…</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT: Upcoming -->
+          <div class="dash-col">
+
+            <div class="dash-card">
+              <div class="dash-card-hd dash-hd-teal">
+                <span class="dash-card-title">Upcoming Events</span>
+                <span class="dash-card-chip">7 days</span>
+              </div>
+              <div id="dash-events-upcoming" class="dash-list">
+                <div class="dash-empty-state">Loading…</div>
+              </div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-hd dash-hd-amber">
+                <span class="dash-card-title">Upcoming Deadlines</span>
+                <span class="dash-card-chip">7 days</span>
+              </div>
+              <div id="dash-deadlines-upcoming" class="dash-list">
+                <div class="dash-empty-state">Loading…</div>
+              </div>
+            </div>
+
+          </div>
+
+        </div><!-- /dash-grid -->
+
+      </div><!-- /dash-inner -->
+    </div><!-- /dash-scroll -->
+  </div>
+
+  <!-- ── Tasks Tab ────────────────────────────────────────────── -->
+  <div id="tab-worklog" class="tab-content">
     <div class="toolbar">
       <button id="btn-add-task" class="btn btn-primary">+ New Task</button>
-      <div class="filter-group">
-        <div class="filter-dropdown">
-          <button class="filter-btn" id="fb-wl-type">Type <span class="filter-count"></span><span class="filter-arrow">▾</span></button>
-          <div class="filter-panel hidden" id="fp-wl-type"></div>
-        </div>
-        <div class="filter-dropdown">
-          <button class="filter-btn" id="fb-wl-priority">Priority <span class="filter-count"></span><span class="filter-arrow">▾</span></button>
-          <div class="filter-panel hidden" id="fp-wl-priority"></div>
-        </div>
-        <div class="filter-dropdown">
-          <button class="filter-btn" id="fb-wl-pic">PIC <span class="filter-count"></span><span class="filter-arrow">▾</span></button>
-          <div class="filter-panel hidden" id="fp-wl-pic"></div>
-        </div>
-        <div class="filter-dropdown">
-          <button class="filter-btn" id="fb-wl-project">Project <span class="filter-count"></span><span class="filter-arrow">▾</span></button>
-          <div class="filter-panel hidden" id="fp-wl-project"></div>
-        </div>
-      </div>
+      <div id="wl-filters" class="filter-group"></div>
       <div class="toolbar-divider"></div>
       <div class="filter-dropdown">
         <button class="filter-btn group-btn" id="gb-btn-wl">&#9638; Group: None <span class="filter-arrow">▾</span></button>
@@ -57,22 +211,9 @@
     </div>
     <div class="table-wrapper">
       <table id="table-worklog" class="data-table">
-        <thead>
-          <tr>
-            <th class="col-status">Done</th>
-            <th class="col-date sortable" data-col="Date">Date <span class="sort-arrow"></span></th>
-            <th class="col-items sortable" data-col="Items">Task / Items <span class="sort-arrow"></span></th>
-            <th class="col-type sortable" data-col="Type">Type <span class="sort-arrow"></span></th>
-            <th class="col-priority sortable" data-col="Priority">Priority <span class="sort-arrow"></span></th>
-            <th class="col-pic sortable" data-col="PIC">PIC <span class="sort-arrow"></span></th>
-            <th class="col-deadline sortable" data-col="Deadline">Deadline <span class="sort-arrow"></span></th>
-            <th class="col-project sortable" data-col="Project">Project <span class="sort-arrow"></span></th>
-            <th class="col-remark">Remark</th>
-            <th class="col-actions">Actions</th>
-          </tr>
-        </thead>
+        <thead><tr></tr></thead>
         <tbody id="tbody-worklog">
-          <tr class="loading-row"><td colspan="10">Loading…</td></tr>
+          <tr class="loading-row"><td colspan="9">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -82,24 +223,7 @@
   <div id="tab-archived" class="tab-content">
     <div class="toolbar">
       <span class="toolbar-label">Completed tasks</span>
-      <div class="filter-group">
-        <div class="filter-dropdown">
-          <button class="filter-btn" id="fb-ar-type">Type <span class="filter-count"></span><span class="filter-arrow">▾</span></button>
-          <div class="filter-panel hidden" id="fp-ar-type"></div>
-        </div>
-        <div class="filter-dropdown">
-          <button class="filter-btn" id="fb-ar-priority">Priority <span class="filter-count"></span><span class="filter-arrow">▾</span></button>
-          <div class="filter-panel hidden" id="fp-ar-priority"></div>
-        </div>
-        <div class="filter-dropdown">
-          <button class="filter-btn" id="fb-ar-pic">PIC <span class="filter-count"></span><span class="filter-arrow">▾</span></button>
-          <div class="filter-panel hidden" id="fp-ar-pic"></div>
-        </div>
-        <div class="filter-dropdown">
-          <button class="filter-btn" id="fb-ar-project">Project <span class="filter-count"></span><span class="filter-arrow">▾</span></button>
-          <div class="filter-panel hidden" id="fp-ar-project"></div>
-        </div>
-      </div>
+      <div id="ar-filters" class="filter-group"></div>
       <div class="toolbar-divider"></div>
       <div class="filter-dropdown">
         <button class="filter-btn group-btn" id="gb-btn-ar">&#9638; Group: None <span class="filter-arrow">▾</span></button>
@@ -109,24 +233,35 @@
     </div>
     <div class="table-wrapper">
       <table id="table-archived" class="data-table">
-        <thead>
-          <tr>
-            <th class="col-date sortable" data-col="Date">Date <span class="sort-arrow"></span></th>
-            <th class="col-items sortable" data-col="Items">Task / Items <span class="sort-arrow"></span></th>
-            <th class="col-type sortable" data-col="Type">Type <span class="sort-arrow"></span></th>
-            <th class="col-priority sortable" data-col="Priority">Priority <span class="sort-arrow"></span></th>
-            <th class="col-pic sortable" data-col="PIC">PIC <span class="sort-arrow"></span></th>
-            <th class="col-deadline sortable" data-col="Deadline">Deadline <span class="sort-arrow"></span></th>
-            <th class="col-completion sortable" data-col="CompletionDate">Completed <span class="sort-arrow"></span></th>
-            <th class="col-project sortable" data-col="Project">Project <span class="sort-arrow"></span></th>
-            <th class="col-remark">Remark</th>
-            <th class="col-actions">Actions</th>
-          </tr>
-        </thead>
+        <thead><tr></tr></thead>
         <tbody id="tbody-archived">
-          <tr class="loading-row"><td colspan="10">Loading…</td></tr>
+          <tr class="loading-row"><td colspan="9">Loading…</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ── Calendar Tab ──────────────────────────────────────── -->
+  <div id="tab-calendar" class="tab-content">
+    <div class="cal-container">
+
+      <!-- Calendar toolbar -->
+      <div class="cal-toolbar">
+        <div class="cal-nav">
+          <button id="cal-prev" class="btn btn-icon" title="Previous week">&#9665;</button>
+          <button id="cal-today-btn" class="btn btn-secondary">Today</button>
+          <button id="cal-next" class="btn btn-icon" title="Next week">&#9655;</button>
+          <h2 id="cal-week-label" class="cal-week-label"></h2>
+        </div>
+        <div id="cal-conn-notice" class="cal-conn-notice hidden"></div>
+        <button id="cal-new-event" class="btn btn-primary">+ New Event</button>
+      </div>
+
+      <!-- Week grid (rendered by JS) -->
+      <div class="cal-scroll">
+        <div id="cal-week-view" class="cal-week-view"></div>
+      </div>
+
     </div>
   </div>
 
@@ -134,17 +269,48 @@
   <div id="tab-settings" class="tab-content">
     <div class="settings-container">
 
+      <!-- ── Storage ──────────────────────────────────────────── -->
       <section class="settings-section">
-        <h2>Google Sheets Connection</h2>
+        <h2>Storage</h2>
+        <p class="settings-hint">
+          Choose where your task data is saved. Either way you pick a save file — back it up anytime by copying that file.
+        </p>
+        <div class="field-row">
+          <label>Mode</label>
+          <div style="display:flex;gap:20px;align-items:center;padding:4px 0">
+            <label style="display:flex;gap:8px;align-items:center;cursor:pointer;font-size:13px">
+              <input type="radio" name="storage-mode" id="s-mode-local" value="local" />
+              Local only
+            </label>
+            <label style="display:flex;gap:8px;align-items:center;cursor:pointer;font-size:13px">
+              <input type="radio" name="storage-mode" id="s-mode-google" value="google" />
+              Sync with Google Sheets
+            </label>
+          </div>
+        </div>
+        <div class="field-row">
+          <label>Save file location</label>
+          <div class="file-picker-row">
+            <input id="s-data-file-path" type="text" class="form-input" readonly placeholder="No file selected…" />
+            <button id="btn-pick-data-file" class="btn btn-secondary">Browse…</button>
+            <button id="btn-new-data-file" class="btn btn-secondary">New…</button>
+          </div>
+          <span class="field-hint">Your task data is stored here — back it up by copying this file.</span>
+        </div>
+      </section>
+
+      <!-- ── Google Sheets (only shown in Sync mode) ──────────── -->
+      <section class="settings-section" id="s-google-section">
+        <h2>Google Sheets</h2>
         <p class="settings-hint">
           You need a Google <strong>Service Account</strong> JSON key and a Spreadsheet ID.<br/>
           Share the spreadsheet with the service account email (Editor permission).
         </p>
         <div class="field-row">
-          <label>Credentials JSON file</label>
+          <label>Service Account JSON</label>
           <div class="file-picker-row">
-            <input id="s-cred-path" type="text" class="form-input" readonly placeholder="Click Browse…" />
-            <button id="btn-browse-cred" class="btn btn-secondary">Browse…</button>
+            <input id="s-sa-status" type="text" class="form-input" readonly placeholder="Not imported" />
+            <button id="btn-import-sa" class="btn btn-secondary">Import JSON…</button>
           </div>
         </div>
         <div class="field-row">
@@ -158,35 +324,53 @@
         </div>
       </section>
 
+      <!-- ── Google Calendar ──────────────────────────────────── -->
       <section class="settings-section">
-        <h2>Configurable Fields</h2>
-
+        <h2>Google Calendar</h2>
+        <p class="settings-hint">
+          Create an <strong>OAuth 2.0 Client ID</strong> (Desktop App type) in Google Cloud Console
+          and enable the Calendar API.
+        </p>
         <div class="field-row">
-          <label>Types <span class="field-hint">(comma-separated)</span></label>
-          <input id="s-types" type="text" class="form-input" placeholder="Documentation, CR, Deployment" />
+          <label>Client ID</label>
+          <input id="s-cal-client-id" type="text" class="form-input" placeholder="…apps.googleusercontent.com" />
         </div>
-
         <div class="field-row">
-          <label>Priorities <span class="field-hint">(comma-separated)</span></label>
-          <input id="s-priorities" type="text" class="form-input" placeholder="Normal, Low, High" />
+          <label>Client Secret</label>
+          <input id="s-cal-client-secret" type="password" class="form-input" placeholder="GOCSPX-…" />
         </div>
-
-        <div class="field-row">
-          <label>PIC Names <span class="field-hint">(comma-separated)</span></label>
-          <input id="s-pics" type="text" class="form-input" placeholder="Jance" />
+        <div class="btn-row">
+          <button id="btn-cal-connect" class="btn btn-primary">Connect Google Calendar</button>
+          <button id="btn-cal-disconnect" class="btn btn-secondary">Disconnect</button>
+          <span id="cal-auth-status" class="conn-status"></span>
         </div>
       </section>
 
       <section class="settings-section">
-        <h2>Type Colors</h2>
-        <p class="settings-hint">Pick a badge color for each type. Save the Types list first, then colors appear here.</p>
-        <div id="type-color-grid" class="color-grid"></div>
+        <h2>Dashboard Background</h2>
+        <p class="settings-hint">
+          Images are copied into the app — safe to move or delete the originals.<br/>
+          Recommended size: <strong>1920 × 320px</strong> (6:1 ratio), JPG or WebP, under 2 MB.
+          Wider/shorter images show more of the scene. Taller images will be cropped to fit the banner.
+        </p>
+
+        <div class="bg-slot">
+          <div class="bg-slot-label">Default background</div>
+          <div id="bg-default-thumbs" class="bg-thumb-row"></div>
+          <button id="btn-bg-add-default" class="btn btn-secondary btn-sm">+ Add Images</button>
+        </div>
+
+        <div class="bg-periods-header">
+          <span class="bg-slot-label" style="margin:0">Time periods</span>
+          <button id="btn-bg-add-period" class="btn btn-secondary btn-sm">+ Add Period</button>
+        </div>
+        <div id="bg-periods-list"></div>
       </section>
 
       <section class="settings-section">
-        <h2>Priority Colors</h2>
-        <p class="settings-hint">Pick a badge color for each priority level.</p>
-        <div id="priority-color-grid" class="color-grid"></div>
+        <h2>Columns</h2>
+        <p class="settings-hint">Define the columns in your task table. Drag cards to reorder. Changes apply after Save.</p>
+        <div id="col-manager-container" class="col-manager"></div>
       </section>
 
       <section class="settings-section">
@@ -238,22 +422,7 @@
             <label>Task / Items *</label>
             <input id="f-items" type="text" class="form-input" placeholder="Describe the task…" />
           </div>
-          <div class="form-field">
-            <label>Type</label>
-            <select id="f-type" class="form-input"></select>
-          </div>
-          <div class="form-field">
-            <label>Priority</label>
-            <select id="f-priority" class="form-input"></select>
-          </div>
-          <div class="form-field">
-            <label>PIC</label>
-            <select id="f-pic" class="form-input"></select>
-          </div>
-          <div class="form-field">
-            <label>Project</label>
-            <input id="f-project" type="text" class="form-input" placeholder="e.g. Project Alpha" />
-          </div>
+          <div id="modal-custom-fields" style="display:contents"></div>
           <div class="form-field" id="f-completion-row">
             <label>Completion Date</label>
             <input id="f-completion" type="date" class="form-input" />
@@ -287,6 +456,78 @@
     </div>
   </div>
 
+  <!-- ── Modal: New Calendar Event ────────────────────────────── -->
+  <div id="cal-event-modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="cal-event-modal-title">New Event</h3>
+        <button class="modal-close" id="btn-cal-event-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-field span-2">
+            <label>Title *</label>
+            <input id="ce-title" type="text" class="form-input" placeholder="Event title…" />
+          </div>
+          <div class="form-field span-2">
+            <label class="toggle-row" style="text-transform:none;font-size:12px;font-weight:600;color:var(--text-muted);">
+              <input type="checkbox" id="ce-allday" />
+              <span>All-day event</span>
+            </label>
+          </div>
+          <div class="form-field" id="ce-date-row">
+            <label>Date *</label>
+            <input id="ce-date" type="date" class="form-input" />
+          </div>
+          <div class="form-field" id="ce-enddate-row" style="display:none">
+            <label>End Date</label>
+            <input id="ce-enddate" type="date" class="form-input" />
+          </div>
+          <div class="form-field" id="ce-start-row">
+            <label>Start Time *</label>
+            <input id="ce-start" type="time" class="form-input" />
+          </div>
+          <div class="form-field" id="ce-end-row">
+            <label>End Time *</label>
+            <input id="ce-end" type="time" class="form-input" />
+          </div>
+          <div class="form-field span-2">
+            <label>Location</label>
+            <input id="ce-location" type="text" class="form-input" placeholder="Optional location…" />
+          </div>
+          <div class="form-field span-2">
+            <label>Description</label>
+            <textarea id="ce-description" class="form-input" rows="3" placeholder="Optional notes…"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cal-event-cancel" class="btn btn-secondary">Cancel</button>
+        <button id="btn-cal-event-save" class="btn btn-primary">Create Event</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal: View/Delete Calendar Event ─────────────────────── -->
+  <div id="cal-view-modal-overlay" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="cal-view-title" style="flex:1;margin-right:8px;word-break:break-word"></h3>
+        <button class="modal-close" id="btn-cal-view-close">&times;</button>
+      </div>
+      <div class="modal-body" style="user-select:text">
+        <div id="cal-view-body" style="font-size:13px;line-height:1.8;color:var(--text)"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cal-view-open" class="btn btn-secondary">Open in Google Calendar</button>
+        <button id="btn-cal-view-delete" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <script src="renderer.js"></script>
+
+  </main><!-- /main-content -->
+</div><!-- /app-layout -->
 </body>
 </html>
