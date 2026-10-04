@@ -227,6 +227,32 @@ body { display: flex; }
   padding: 6px 4px;
 }
 
+/* ── Table settings popover (gear) ────────────────────────── */
+.table-settings-btn { font-size: 14px; line-height: 1; padding: 5px 9px; }
+.table-settings-panel {
+  right: 0;
+  left: auto;
+  min-width: 460px;
+  max-width: 560px;
+  max-height: 72vh;
+}
+.table-settings-panel .ts-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 14px 16px;
+}
+.table-settings-panel .ts-group-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.table-settings-panel .field-row:last-child { margin-bottom: 0; }
+.table-settings-panel .settings-hint { margin-top: 0; }
+
 .filter-item {
   display: flex;
   align-items: center;
@@ -329,18 +355,25 @@ body { display: flex; }
 .table-wrapper {
   flex: 1;
   overflow: auto;
-  padding: 16px 20px;
+  padding: 0 0 16px;
 }
 
 .data-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 12.5px;
 }
 
+/* Left/right gutters live inside the edge cells (not as table margin/wrapper
+   padding) so frozen cells stay flush to the scroll origin the JS assumes. */
+.data-table th:first-child,
+.data-table td:first-child { padding-left: 20px; }
+.data-table th:last-child,
+.data-table td:last-child { padding-right: 20px; }
+
 .data-table thead tr {
   background: var(--surface2);
-  border-bottom: 2px solid var(--border);
 }
 .data-table th {
   padding: 9px 12px;
@@ -351,7 +384,7 @@ body { display: flex; }
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
   background: var(--surface2);
 }
 .data-table th.sortable { cursor: pointer; }
@@ -359,7 +392,6 @@ body { display: flex; }
 .sort-arrow { font-size: 9px; margin-left: 3px; }
 
 .data-table tbody tr {
-  border-bottom: 1px solid var(--border);
   transition: background 0.1s;
 }
 .data-table tbody tr:hover { background: var(--surface2); }
@@ -367,6 +399,7 @@ body { display: flex; }
   padding: 8px 12px;
   color: var(--text);
   vertical-align: middle;
+  border-bottom: 1px solid var(--border);
 }
 
 /* Editable cells */
@@ -1901,6 +1934,27 @@ input[type="date"].form-input::-webkit-calendar-picker-indicator { filter: inver
 
 .col-card-body {
   padding: 12px 14px;
+}
+
+.col-default-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.col-default-row label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.col-default-row select.form-input {
+  flex: 1;
+  max-width: 220px;
 }
 
 .col-add-row {

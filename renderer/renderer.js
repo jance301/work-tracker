@@ -320,6 +320,20 @@ function setupFreezeSettings() {
   cSel?.addEventListener('change', onChange);
 }
 
+function setupTableSettingsPanel() {
+  const btn   = document.getElementById('tbl-settings-btn');
+  const panel = document.getElementById('tbl-settings-panel');
+  if (!btn || !panel) return;
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    document.querySelectorAll('.filter-panel').forEach(p => { if (p !== panel) p.classList.add('hidden'); });
+    panel.classList.toggle('hidden');
+  });
+  // Keep clicks inside the panel from closing it (global handler closes panels).
+  panel.addEventListener('click', e => e.stopPropagation());
+}
+
 /* ── Init ───────────────────────────────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded', async () => {
   setupTabs();
@@ -331,6 +345,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupGroupBy();
   setupResizableColumns();
   setupFreezeSettings();
+  setupTableSettingsPanel();
   setupCalEventModal();
 
   config = await window.api.getConfig();
@@ -1132,7 +1147,7 @@ function openAddModal() {
   editingTask = null;
   editingArchived = false;
   document.getElementById('modal-title').textContent = 'New Task';
-  fillModalSelects({});
+  fillModalSelects(defaultTaskFromColumns());
   document.getElementById('f-date').value = todayStr();
   document.getElementById('f-deadline').value = '';
   document.getElementById('f-items').value = '';
@@ -1158,6 +1173,15 @@ function openEditModal(id, isArchived) {
   document.getElementById('f-completion').value = task.CompletionDate || '';
   document.getElementById('f-completion-row').style.display = '';
   document.getElementById('modal-overlay').classList.remove('hidden');
+}
+
+// Seed a new task with each column's configured default (if any).
+function defaultTaskFromColumns() {
+  const t = {};
+  (config.customColumns || []).forEach(col => {
+    if (col.default) t[taskFieldFor(col)] = col.default;
+  });
+  return t;
 }
 
 function fillModalSelects(task = {}) {
@@ -1602,7 +1626,6 @@ async function saveSettings(showStatus) {
     spreadsheetId:        document.getElementById('s-sheet-id').value.trim(),
     calendarClientId:     document.getElementById('s-cal-client-id').value.trim(),
     calendarClientSecret: document.getElementById('s-cal-client-secret').value.trim(),
-    customColumns:        collectColumnsFromManager(),
   };
 
   await window.api.saveConfig(data);
@@ -1663,12 +1686,35 @@ function renderColumnsManager() {
     container.insertBefore(card, addRow);
     const inp = card.querySelector('.col-name-input');
     inp.focus(); inp.select();
+    commitColumns();
   };
   document.getElementById('btn-add-multi-col').addEventListener('click', () => addCol('multiselect'));
   document.getElementById('btn-add-drop-col').addEventListener('click',  () => addCol('dropdown'));
 
+  // Apply column edits immediately: `change` fires on blur after a text/color/
+  // select edit; `drop` covers card- and item-level drag-reorder.
+  container.addEventListener('change', commitColumns);
+  container.addEventListener('drop',   () => setTimeout(commitColumns, 0));
+
   // Card-level drag-to-reorder
   setupCardDrag(container);
+}
+
+// Persist + apply the current column-manager state (no Save button). Mirrors the
+// re-render set the Settings "Save" flow used, minus a data reload. Never
+// re-renders the manager itself, so an in-progress edit keeps focus.
+function commitColumns() {
+  const next = collectColumnsFromManager();
+  if (JSON.stringify(next) === JSON.stringify(config.customColumns || [])) return;
+  config.customColumns = next;
+  window.api.saveConfig({ customColumns: next });
+  deriveConfigShorthands(config);
+  initFilterState();
+  renderTableHeaders();
+  renderFilterToolbars();
+  renderModalCustomFields();
+  renderWorklog();
+  renderArchived();
 }
 
 function renderColumnCard(col) {
@@ -1692,6 +1738,12 @@ function renderColumnCard(col) {
     <div class="col-card-body">
       <div class="item-list" id="col-items-${col.id}"></div>
       <button class="btn-add-item col-add-item-btn">+ Add another item</button>
+      <div class="col-default-row">
+        <label>Default for new tasks</label>
+        <select class="col-default-select form-input">
+          <option value="">— No default —</option>
+        </select>
+      </div>
     </div>`;
 
   const listEl = card.querySelector(`#col-items-${col.id}`);
@@ -1699,6 +1751,19 @@ function renderColumnCard(col) {
     listEl.appendChild(makeListItem(name, defaultItemColor(col, name)));
   });
   setupListDrag(listEl);
+
+  // Default selector — rebuilt from the current item names each time it opens,
+  // so renamed/added items stay in sync without re-rendering the whole manager.
+  const defSel = card.querySelector('.col-default-select');
+  const fillDefaultOptions = () => {
+    const cur   = defSel.value || col.default || '';
+    const names = [...listEl.querySelectorAll('.list-item-name')].map(i => i.value.trim()).filter(Boolean);
+    defSel.innerHTML = '<option value="">— No default —</option>' +
+      names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+    defSel.value = names.includes(cur) ? cur : '';
+  };
+  fillDefaultOptions();
+  defSel.addEventListener('mousedown', fillDefaultOptions);
 
   card.querySelector('.col-add-item-btn').addEventListener('click', () => {
     listEl.appendChild(makeListItem('', '#6c8ef5'));
@@ -1710,6 +1775,7 @@ function renderColumnCard(col) {
     card.querySelector('.col-delete-btn').addEventListener('click', () => {
       if (window.confirm(`Delete the "${card.querySelector('.col-name-input').value || col.name}" column?\n\nExisting task data in this column will no longer display.`)) {
         card.remove();
+        commitColumns();
       }
     });
   }
@@ -1729,13 +1795,16 @@ function collectColumnsFromManager() {
     const id       = card.dataset.colId;
     const existing = (config.customColumns || []).find(c => c.id === id) || {};
     const { names, colors } = collectItemList(`col-items-${id}`);
-    return {
+    const def = card.querySelector('.col-default-select')?.value || '';
+    const out = {
       ...existing,
       id,
       name:   (card.querySelector('.col-name-input').value || '').trim() || existing.name || id,
       items:  names,
       colors,
     };
+    if (def && names.includes(def)) out.default = def; else delete out.default;
+    return out;
   });
 }
 

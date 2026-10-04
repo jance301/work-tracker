@@ -207,6 +207,39 @@
         <button class="filter-btn group-btn" id="gb-btn-wl">&#9638; Group: None <span class="filter-arrow">▾</span></button>
         <div class="filter-panel hidden" id="gb-panel-wl"></div>
       </div>
+      <div class="filter-dropdown">
+        <button class="filter-btn table-settings-btn" id="tbl-settings-btn" title="Table settings" aria-label="Table settings">&#9881;</button>
+        <div class="filter-panel table-settings-panel hidden" id="tbl-settings-panel">
+          <div class="filter-panel-head"><span>Table settings</span></div>
+          <div class="filter-panel-body ts-body">
+            <div class="ts-group">
+              <div class="ts-group-title">Table Preferences</div>
+              <p class="settings-hint">Saved locally on this device only — not synced.</p>
+              <div class="field-row">
+                <label>Freeze header row</label>
+                <label class="toggle-row">
+                  <input type="checkbox" id="s-freeze-header" />
+                  <span class="field-hint">Keep column headers visible while scrolling down</span>
+                </label>
+              </div>
+              <div class="field-row">
+                <label>Freeze columns <span class="field-hint">(from left)</span></label>
+                <select id="s-freeze-cols" class="form-input" style="max-width:160px">
+                  <option value="0">None</option>
+                  <option value="1">1 column</option>
+                  <option value="2">2 columns</option>
+                  <option value="3">3 columns</option>
+                </select>
+              </div>
+            </div>
+            <div class="ts-group">
+              <div class="ts-group-title">Columns</div>
+              <p class="settings-hint">Define the columns in your task table. Drag cards to reorder. Changes apply immediately.</p>
+              <div id="col-manager-container" class="col-manager"></div>
+            </div>
+          </div>
+        </div>
+      </div>
       <input id="search-worklog" class="search-input" type="text" placeholder="Search…" />
     </div>
     <div class="table-wrapper">
@@ -365,33 +398,6 @@
           <button id="btn-bg-add-period" class="btn btn-secondary btn-sm">+ Add Period</button>
         </div>
         <div id="bg-periods-list"></div>
-      </section>
-
-      <section class="settings-section">
-        <h2>Columns</h2>
-        <p class="settings-hint">Define the columns in your task table. Drag cards to reorder. Changes apply after Save.</p>
-        <div id="col-manager-container" class="col-manager"></div>
-      </section>
-
-      <section class="settings-section">
-        <h2>Table Preferences</h2>
-        <p class="settings-hint">Saved locally on this device only — not synced to Google Sheets.</p>
-        <div class="field-row">
-          <label>Freeze header row</label>
-          <label class="toggle-row">
-            <input type="checkbox" id="s-freeze-header" />
-            <span class="field-hint">Keep column headers visible while scrolling down</span>
-          </label>
-        </div>
-        <div class="field-row">
-          <label>Freeze columns <span class="field-hint">(from left)</span></label>
-          <select id="s-freeze-cols" class="form-input" style="max-width:160px">
-            <option value="0">None</option>
-            <option value="1">1 column</option>
-            <option value="2">2 columns</option>
-            <option value="3">3 columns</option>
-          </select>
-        </div>
       </section>
 
       <div class="btn-row">
