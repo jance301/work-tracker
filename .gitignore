@@ -1,6 +1,15 @@
+# Dependencies
 node_modules/
-.claude
+
+# Build output
+dist/
+release/
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Local / OS files
+.claude/worktrees
+.DS_Store
 logs
 *.log
 credential.json
-dist

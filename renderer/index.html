@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: http://asset.localhost; connect-src ipc: http://ipc.localhost;">
   <title>Task Tracker</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -531,6 +531,7 @@
     </div>
   </div>
 
+  <script src="api.js"></script>
   <script src="renderer.js"></script>
 
   </main><!-- /main-content -->

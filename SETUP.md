@@ -1,6 +1,8 @@
 # Task Tracker — Setup Guide
 
 ## 1. First-time Run
+Requires Node.js and Rust (https://rustup.rs). On Windows, also the
+"Desktop development with C++" workload from Visual Studio Build Tools.
 ```
 npm install
 npm start
@@ -35,13 +37,16 @@ npm start
 
 The app will auto-create "WorkLog" and "Archived" sheets on first connect.
 
-## 3. Build as .exe
+## 3. Build installers
+Build on the platform you are targeting (Windows builds must run on Windows).
 ```
-npm run build
+npm run build        # Windows
+npm run build:mac    # macOS
 ```
-Output will be in the `dist/` folder:
-- `Task Tracker Setup.exe` — installer
-- `Task Tracker.exe` — portable version
+Output is in `src-tauri/target/release/bundle/`:
+- Windows: `nsis/Task Tracker_1.0.0_x64-setup.exe` and `msi/…msi` installers.
+  `src-tauri/target/release/task-tracker.exe` also runs on its own as a portable app.
+- macOS: `dmg/Task Tracker_1.0.0_aarch64.dmg` and `macos/Task Tracker.app`.
 
 ## 4. Move to Another PC
 - Copy your credentials JSON file to the new PC

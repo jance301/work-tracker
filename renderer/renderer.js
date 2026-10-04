@@ -1772,8 +1772,8 @@ function renderColumnCard(col) {
   });
 
   if (!col.locked) {
-    card.querySelector('.col-delete-btn').addEventListener('click', () => {
-      if (window.confirm(`Delete the "${card.querySelector('.col-name-input').value || col.name}" column?\n\nExisting task data in this column will no longer display.`)) {
+    card.querySelector('.col-delete-btn').addEventListener('click', async () => {
+      if (await window.api.confirm(`Delete the "${card.querySelector('.col-name-input').value || col.name}" column?\n\nExisting task data in this column will no longer display.`)) {
         card.remove();
         commitColumns();
       }

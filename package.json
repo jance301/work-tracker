@@ -2,63 +2,13 @@
   "name": "work-tracker",
   "version": "1.0.0",
   "description": "Personal daily work task tracker",
-  "main": "main.js",
+  "private": true,
   "scripts": {
-    "start": "electron .",
-    "build": "electron-builder --win",
-    "build:mac": "electron-builder --mac"
-  },
-  "dependencies": {
-    "googleapis": "^144.0.0"
+    "start": "tauri dev",
+    "build": "tauri build",
+    "build:mac": "CI=true tauri build"
   },
   "devDependencies": {
-    "electron": "^33.0.0",
-    "electron-builder": "^25.0.0"
-  },
-  "build": {
-    "appId": "com.jance.tasktracker",
-    "productName": "Task Tracker",
-    "directories": {
-      "output": "dist"
-    },
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64"]
-        },
-        {
-          "target": "portable",
-          "arch": ["x64"]
-        }
-      ],
-      "signingHashAlgorithms": null,
-      "sign": null
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
-    },
-    "mac": {
-      "target": [
-        { "target": "dmg", "arch": ["x64", "arm64"] },
-        { "target": "zip", "arch": ["x64", "arm64"] }
-      ],
-      "category": "public.app-category.productivity",
-      "icon": "assets/icon.icns"
-    },
-    "dmg": {
-      "title": "Task Tracker"
-    },
-    "files": [
-      "main.js",
-      "preload.js",
-      "src/**",
-      "renderer/**",
-      "assets/**",
-      "node_modules/**"
-    ],
-    "extraResources": []
+    "@tauri-apps/cli": "^2.12.1"
   }
 }
