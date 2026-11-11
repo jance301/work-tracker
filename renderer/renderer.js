@@ -768,6 +768,7 @@ function archivedRowHtml(t) {
         </div>
       </td>
       <td class="col-actions">
+        <button class="action-btn reopen-btn" data-id="${t.ID}" title="Reopen">&#8617;</button>
         <button class="action-btn edit-btn" data-id="${t.ID}" data-archived="1" title="Edit">&#9998;</button>
         <button class="action-btn delete delete-btn" data-id="${t.ID}" data-archived="1" title="Delete">&#128465;</button>
       </td>
@@ -909,6 +910,7 @@ function renderArchived() {
   tbody.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', () => confirmDelete(btn.dataset.id, 'archived'));
   });
+  tbody.querySelectorAll('.reopen-btn').forEach(btn => btn.addEventListener('click', onReopen));
   tbody.querySelectorAll('.group-header-row').forEach(row => {
     row.addEventListener('click', () => {
       const key = row.dataset.groupKey;
@@ -919,7 +921,7 @@ function renderArchived() {
   });
 
   applyAllBadgeColors(tbody);
-  highlightDeadlines(tbody);
+  highlightDeadlines(tbody, true);
   setupRemarkCells(tbody);
   updateStickyOffsets(document.getElementById('table-archived'));
 }
@@ -936,6 +938,7 @@ async function onInlineChange(e) {
   const task = list.find(t => t.ID === id);
   if (!task) return;
   task[field] = value;
+  if (field === 'Deadline' || field === 'CompletionDate') highlightDeadlineRow(el.closest('tr'), isArchived);
 
   const res = isArchived
     ? await window.api.updateArchived(task)
@@ -975,6 +978,20 @@ async function onComplete(e) {
   } else {
     setSyncStatus('Error: ' + res.error, 'error');
     e.target.checked = false;
+  }
+}
+
+/* ── Reopen task ────────────────────────────────────────────────────────── */
+async function onReopen(e) {
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  setSyncStatus('Reopening…');
+  const res = await window.api.reopenTask(btn.dataset.id);
+  if (res.ok) {
+    await loadAll();
+  } else {
+    setSyncStatus('Error: ' + res.error, 'error');
+    btn.disabled = false;
   }
 }
 
@@ -1067,22 +1084,38 @@ function sortRows(rows, col, dir) {
   });
 }
 
-function highlightDeadlines(tbody) {
-  const today = new Date(); today.setHours(0,0,0,0);
-  const soon  = new Date(today); soon.setDate(soon.getDate() + 3);
+function highlightDeadlines(tbody, isArchived = false) {
+  tbody.querySelectorAll('[data-field="Deadline"]').forEach(inp =>
+    highlightDeadlineRow(inp.closest('tr'), isArchived));
+}
 
-  tbody.querySelectorAll('[data-field="Deadline"]').forEach(inp => {
-    if (!inp.value) return;
-    const d = new Date(inp.value);
-    const row = inp.closest('tr');
-    if (d < today) {
+// Active tasks: compare deadline to today. Archived tasks: flag only if completed after the deadline.
+function highlightDeadlineRow(row, isArchived) {
+  const inp = row.querySelector('[data-field="Deadline"]');
+  if (!inp) return;
+  row.classList.remove('row-overdue', 'row-approaching');
+  inp.classList.remove('deadline-overdue', 'deadline-approaching');
+  if (!inp.value) return;
+  const d = new Date(inp.value);
+
+  if (isArchived) {
+    const done = row.querySelector('[data-field="CompletionDate"]')?.value;
+    if (done && new Date(done) > d) {
       row.classList.add('row-overdue');
       inp.classList.add('deadline-overdue');
-    } else if (d <= soon) {
-      row.classList.add('row-approaching');
-      inp.classList.add('deadline-approaching');
     }
-  });
+    return;
+  }
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const soon  = new Date(today); soon.setDate(soon.getDate() + 3);
+  if (d < today) {
+    row.classList.add('row-overdue');
+    inp.classList.add('deadline-overdue');
+  } else if (d <= soon) {
+    row.classList.add('row-approaching');
+    inp.classList.add('deadline-approaching');
+  }
 }
 
 /* ── Sort ───────────────────────────────────────────────────────────────── */

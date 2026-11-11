@@ -193,6 +193,19 @@ impl Sheets {
         self.delete_row(SHEET_TASKS, row).await
     }
 
+    pub async fn reopen_task(&self, id: &str) -> Result<(), String> {
+        let row = self.find_row(SHEET_ARCHIVED, id).await?.ok_or(format!("Archived task {id} not found"))?;
+        let values = self.get_values(&format!("{SHEET_ARCHIVED}!A{row}:L{row}")).await?;
+        let mut task = row_to_task(values.first().map(|r| r.as_slice()).unwrap_or_default());
+        task["Status"] = json!(false);
+        task["CompletionDate"] = json!("");
+
+        // Append to WorkLog
+        self.append_values(&format!("{SHEET_TASKS}!A2"), vec![task_to_row(&task)]).await?;
+        // Delete from Archived
+        self.delete_row(SHEET_ARCHIVED, row).await
+    }
+
     pub async fn delete_task(&self, id: &str) -> Result<(), String> {
         let row = self.find_row(SHEET_TASKS, id).await?.ok_or(format!("Task {id} not found"))?;
         self.delete_row(SHEET_TASKS, row).await

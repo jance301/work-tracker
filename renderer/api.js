@@ -26,6 +26,7 @@
     addTask:        (task) => invoke('sheets_add_task', { task }),
     updateTask:     (task) => invoke('sheets_update_task', { task }),
     completeTask:   (id)   => invoke('sheets_complete_task', { id }),
+    reopenTask:     (id)   => invoke('sheets_reopen_task', { id }),
     deleteTask:     (id)   => invoke('sheets_delete_task', { id }),
     deleteArchived: (id)   => invoke('sheets_delete_archived', { id }),
     updateArchived: (task) => invoke('sheets_update_archived', { task }),

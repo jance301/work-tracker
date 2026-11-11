@@ -371,6 +371,17 @@ async fn sheets_complete_task(config: State<'_, Config>, id: String) -> Result<V
 }
 
 #[tauri::command]
+async fn sheets_reopen_task(config: State<'_, Config>, id: String) -> Result<Value, ()> {
+    Ok(wrap(async {
+        match data_service(&config).await? {
+            DataService::Local(l) => l.reopen_task(&id),
+            DataService::Google(s) => s.reopen_task(&id).await,
+        }
+        .map(|_| Value::Null)
+    }.await))
+}
+
+#[tauri::command]
 async fn sheets_delete_task(config: State<'_, Config>, id: String) -> Result<Value, ()> {
     Ok(wrap(async {
         match data_service(&config).await? {
@@ -551,6 +562,7 @@ fn main() {
             sheets_add_task,
             sheets_update_task,
             sheets_complete_task,
+            sheets_reopen_task,
             sheets_delete_task,
             sheets_delete_archived,
             sheets_update_archived,

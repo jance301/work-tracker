@@ -143,6 +143,17 @@ impl LocalData {
         self.write(tasks, archived)
     }
 
+    pub fn reopen_task(&self, id: &str) -> Result<(), String> {
+        let _guard = WRITE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let (mut tasks, mut archived) = self.read();
+        let idx = Self::index_of(&archived, id).ok_or(format!("Archived task {id} not found"))?;
+        let mut task = archived.remove(idx);
+        task["Status"] = json!(false);
+        task["CompletionDate"] = json!("");
+        tasks.push(task);
+        self.write(tasks, archived)
+    }
+
     pub fn delete_task(&self, id: &str) -> Result<(), String> {
         let _guard = WRITE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let (mut tasks, archived) = self.read();
@@ -194,6 +205,15 @@ mod tests {
         let archived = store.get_archived();
         assert_eq!(archived[0]["Status"], true);
         assert_eq!(archived[0]["CompletionDate"], today());
+
+        store.reopen_task(&id).unwrap();
+        assert!(store.get_archived().is_empty());
+        let reopened = store.get_tasks();
+        assert_eq!(reopened[0]["Status"], false);
+        assert_eq!(reopened[0]["CompletionDate"], "");
+        assert_eq!(reopened[0]["Remark"], "done soon");
+
+        store.complete_task(&id).unwrap();
 
         store.delete_archived(&id).unwrap();
         assert!(store.get_archived().is_empty());
